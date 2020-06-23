@@ -15,8 +15,10 @@ DefinitionBlock("", "SSDT", 2, "T460", "KBRD", 0)
     External (\_SB.PCI0.LPC.EC.XQ68, MethodObj)
     External (\_SB.PCI0.LPC.EC.XQ69, MethodObj)
     External (\_SB.PCI0.LPC.EC.XQ1F, MethodObj)
+    External (\_SB.PCI0.LPC.EC.XQ74, MethodObj)
     External (\_SB.PCI0.LPC.EC.HKEY.MMTS, MethodObj)
     External (\_SB.PCI0.LPC.EC.HKEY.MLCS, MethodObj)
+    External (\_SB.PCI0.LPC.EC.HKEY.MHKQ, MethodObj)
     External (_SI._SST, MethodObj)
     
     Scope (\)
@@ -260,12 +262,51 @@ DefinitionBlock("", "SSDT", 2, "T460", "KBRD", 0)
           	            Else
           	            {
                             // Call original _Q6A method.
-                            \_SB.PCI0.LPC.EC.XQ1F ()
+                            \_SB.PCI0.LPC.EC.XQ1F()
           	            }
                     }
                 }
             }
         }
+        
+        Name (LED3, Zero)
+        
+        Method (_Q74, 0, NotSerialized) // FnLock (Fn + Esc)
+        {
+            If (_OSI ("Darwin"))
+            {
+                // Toggle FnLock LED
+                If ((LED3 == Zero))
+                {
+                    // Right Shift + F18
+                    Notify (\_SB.PCI0.LPC.KBD, 0x012A)
+                    Notify (\_SB.PCI0.LPC.KBD, 0x0369)
+                    Notify (\_SB.PCI0.LPC.KBD, 0x01aa)
+
+                    // 0x02 = Enable LED
+                    \_SB.PCI0.LPC.EC.HKEY.MHKQ (0x02)
+                    LED3 = One
+                }
+                Else
+                {
+                    // Left Shift + F18
+                    Notify (\_SB.PCI0.LPC.KBD, 0x0136)
+                    Notify (\_SB.PCI0.LPC.KBD, 0x0369)
+                    Notify (\_SB.PCI0.LPC.KBD, 0x01b6)
+
+                    // 0x00 = Disable LED
+                    \_SB.PCI0.LPC.EC.HKEY.MHKQ (Zero)
+                    LED3 = Zero
+                }
+
+            }
+            Else
+            {
+                // Call original _Q74 method.
+                \_SB.PCI0.LPC.EC.XQ74()
+            }
+        }
+        
     }
 
     Scope (\_SB.PCI0.LPC.KBD)
